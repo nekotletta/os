@@ -3,14 +3,20 @@ import threading
 from threading import Thread
 import time
 
+#EL BONO FUE IMPLEMENTADO EN UNA FUNCION PARA QUE FUERA FACIL
+#CORRRER EL PROGRAMA SIN EL EN CASO DE QUE DIERA PROBLEMAS. 
+#PARA NO DAÑAR NADA YA HECHO
+
 #SERVER
 localIP = 'localhost'
 localPort = 42069
-bufferSize = 1000
+bufferSize = 10000
 mesage = ''
 UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 UDPServerSocket.bind((localIP, localPort))
 print("UDP server up and listening")
+bytesAddressPair = ()
+
 
 #THREADS / PROCESO
 JOB_QUEUE = []
@@ -26,7 +32,35 @@ def display():
   for times in sumatoria:
     for dev, dur in times.items():
       print("Device " + str(dev) + " consumed " + str(dur) + "s of CPU time")
+#BONO
+def avisar(bytesAddressPair):
+    MsgFromServer = "Termine, puedes insertar"
+    msg = str.encode(MsgFromServer)
+    address = bytesAddressPair[1]
+    critical_reg.acquire()
+    UDPServerSocket.sendto(msg, address)
+    critical_reg.release()
 
+class Producer(Thread):
+
+  def __init__(self):
+    Thread.__init__(self)
+
+  def run(self):
+    global FINISHED
+    global bytesAddressPair
+    while not FINISHED:
+      bytesAddressPair = UDPServerSocket.recvfrom(bufferSize)
+      message = str(bytesAddressPair[0])
+      substring = message[message.find("'") + 1:message.find(",")]
+      split = substring.split(":")
+      jobs = {}
+      jobs[int(split[0])] = int(split[1])  #equivalente to 'produce_item'
+      empty_slots.acquire()
+      critical_reg.acquire()
+      JOB_QUEUE.append(jobs)  #equivalent to 'insert_item'
+      critical_reg.release()
+      full_slots.release()
 
 class Consumer(Thread):
 
@@ -44,16 +78,16 @@ class Consumer(Thread):
     for key, dev in suma.items():
       sumatoria.append({key: dev})
     sumatoria = sumatoria = sorted(sumatoria, key=lambda d: list(d.keys())[0])
-
+  
   def run(self):
     global LJF
     global sumatoria
     global PROCESOS_COMP
+    global bytesAddressPair
     LJF = []
     critical_reg.acquire()
     LJF = sorted(JOB_QUEUE, key=lambda d: list(d.values())[0], reverse=True)
     critical_reg.release()
-    global FINISHED
     while not FINISHED:
       full_slots.acquire()
       critical_reg.acquire()
@@ -69,29 +103,9 @@ class Consumer(Thread):
       empty_slots.release()
       self.sumar(nueva_adquisicion)
       PROCESOS_COMP += 1
+      avisar(bytesAddressPair)
       if PROCESOS_COMP == 20:
         display()
-
-
-class Producer(Thread):
-
-  def __init__(self):
-    Thread.__init__(self)
-
-  def run(self):
-    global FINISHED
-    while not FINISHED:
-      bytesAddressPair = UDPServerSocket.recvfrom(bufferSize)
-      message = str(bytesAddressPair[0])
-      substring = message[message.find("'") + 1:message.find(",")]
-      split = substring.split(":")
-      jobs = {}
-      empty_slots.acquire()
-      critical_reg.acquire()
-      jobs[int(split[0])] = int(split[1])  #equivalente to 'produce_item'
-      JOB_QUEUE.append(jobs)  #equivalent to 'insert_item'
-      critical_reg.release()
-      full_slots.release()
 
 producer_thread = Producer()
 producer_thread.start()
