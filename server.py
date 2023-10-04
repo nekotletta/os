@@ -9,7 +9,7 @@ import time
 
 #SERVER
 localIP = 'localhost'
-localPort = 42069
+localPort = int(sys.argv[1]) #para que lea el puerto desde el terminal
 bufferSize = 10000
 mesage = ''
 UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
