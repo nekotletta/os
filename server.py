@@ -2,6 +2,7 @@ import socket
 import threading
 from threading import Thread
 import time
+import sys
 
 #EL BONO FUE IMPLEMENTADO EN UNA FUNCION PARA QUE FUERA FACIL
 #CORRRER EL PROGRAMA SIN EL EN CASO DE QUE DIERA PROBLEMAS. 
