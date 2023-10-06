@@ -37,16 +37,15 @@ El edevice es seleccionado por nosotros mientras que la duración del trabajo es
 
 Es necesario decirle al programa cuál es nuestro device, servidor, y puerto. Para obtener esa información utilizamos la librería sys leyendo los argumentos del terminal.
 
+```
+python edevice.py <device> <servidor> <puerto>
+```
+
 Esa información es colocada en un for loop para enviarle 5 trabajos de una vez.
-
-![image](https://github.com/nekotletta/os/assets/99048617/1ff9c5e6-5105-43a9-8c56-06f5ad43d237)
-
 
 La implementación del servidor UDP fue sacado de la [internet](https://pythontic.com/modules/socket/udp-client-server-example).
 
 Adicional a eso se le asignó un tiempo para dormir aleatorio cada vez que envía un trabajo para no sobrecargar el servidor. 
-
-![image](https://github.com/nekotletta/os/assets/99048617/10f141be-756c-4161-91b5-d3c489cf8ac9)
 
 
 ## Implementación de server.py
@@ -57,8 +56,6 @@ La implementacion de ambos fue basada en el materia discutido en la clase de CCO
 
 Para poder comenzar a implementar eso se utilizaron varias variables globales para ambos threads.
 
-![image](https://github.com/nekotletta/os/assets/99048617/a5a4ca5f-015a-4877-b127-ab8db18326cd)
-
 
 ## Implementación de Producer()
 
@@ -68,7 +65,6 @@ El string recibido tiene formato b'id:tiempo', por lo que lo ponemos en el forma
 
 Utlizamos los objetos semáforo globales para entrar / salir de la región crítica y actualizar nuestros trabajos y nuestra lista sin race condition.
 
-![image](https://github.com/nekotletta/os/assets/99048617/ef96cb5e-c3d6-44c4-bbd2-70c6cb09ad2a)
 
 ## Implementacion de Consumer()
 
@@ -84,7 +80,6 @@ La lista que queremos ordenar es una lista de diccionarios, por lo que se usó  
 
 El ordenar la lista nos coloca en región crítica para evitar race condition. 
 
-![image](https://github.com/nekotletta/os/assets/99048617/52d7b995-0b30-4a28-b375-1df8b8128df1)
 
 ### Ejecucion del trabajo 
 
@@ -92,7 +87,6 @@ Una vez los trabajos estan ordenados podemos comenzar a ejecutarlos (poner el de
 
 Una vez este termina, este es sacado de LJF y guardado en una variable. Esta variable nos dice cuál trabajo sacar de JOB_QUEUE y nos ayuda a calcular el tiempo que cada trabajo se tardó en realizarse.
 
-![image](https://github.com/nekotletta/os/assets/99048617/dd69c9fc-7c77-4ed1-b6f8-2858abed643a)
 
 ### Calculando tiempo
 
@@ -102,10 +96,6 @@ Tenemos que chequear si el edevice trabajado ya tuvo algún trabajo. Si es así,
 
 Esto es otra lista de diccionarios, así que usamos el mismo método para ordenarla de menor a mayor.
 
-![image](https://github.com/nekotletta/os/assets/99048617/f5a4235b-7f2e-47d7-b4e0-4cc025f39735)
-
-![image](https://github.com/nekotletta/os/assets/99048617/f801b22a-c0a0-44a4-a8fd-8b08c7a867d7)
-
 
 ### Resultados del programa
 
@@ -113,19 +103,19 @@ Para poder desplagar cuánto se tardó cada proceso en el CPU, es necesario tene
 
 Cada vez que un trabajo es terminado en el consumer se le anade uno a un contador global. Una vez este llega a 20 los resultados calculados en la funcion **sumatoria()** son desplegados con la funcion **display().**
 
-![image](https://github.com/nekotletta/os/assets/99048617/8630418c-309d-44e0-aca8-6d4eb844086b)
-
 
 ### Threads
 
 Una vez el Producer() y Consumer() estan implementados, los threads se ejecutan así
 
-![image](https://github.com/nekotletta/os/assets/99048617/5c59506a-b6d7-4ce9-aa3e-fe28892ee846)
-
-
-## server.py
-
-![image](https://github.com/nekotletta/os/assets/99048617/697a970d-b360-4ec9-b294-cf5a92edc048)
+```
+producer_thread = Producer()
+producer_thread.start()
+consumer_thread = Consumer()
+consumer_thread.start()
+producer_thread.join()
+consumer_thread.join()
+```
 
 
 # Docmunentación del bono
@@ -151,19 +141,9 @@ Se añadió la función **avisar(bytesAddresPair)**, la cual es la encargada de 
 
 Recibe como argumento a bytesAddressPair para saber a dónde mandar el mensaje utliizando el método **UDPServerSocket.sendto(msg, address)**, donde msg es un string codificado y address es bytesAddressPair[1]
 
-![image](https://github.com/nekotletta/os/assets/99048617/cd3252f2-7d79-49db-93f8-8eecfc64b429)
-
 
 ## Cambios realizados en edevice.py
 
 Anteriormente había un número aleatorio para que el edevice durmiera. Este fue reemplazado con la función **ejecutar()** que espera por el mensaje del servidor con el método **UDPClientSocket.recvfrom(bufferSize)**.
 
-Una vez este recibe el mensaje del servidor este lo despliega y el for loop itera de nuevo, enviando un nuevo trabajo. 
-
-![image](https://github.com/nekotletta/os/assets/99048617/d65320ca-5901-4aff-a168-55682a5bfb78)
-
-
-# Visualizacion del programa corriendo
-
-![image](https://github.com/nekotletta/os/assets/99048617/a8320411-bdfb-442f-b984-ad999b463c04)
-
+Una vez este recibe el mensaje del servidor este lo despliega y el for loop itera de nuevo, enviando un nuevo trabajo.
