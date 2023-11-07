@@ -200,37 +200,30 @@ def mas_vieja(self):
     #items estan construidos [[pag, tiempo, ref bit], indice lista pags]
 
       for item in NW:
-        if item[0][1] < oldest:
-          #campo del tiempo de la pag
 
-          oldest = item[0][1]  #actualizar el tiempo
-          oldInd = item[1]  #indice de la lista de pags
+        if item[0][1] < oldest and item[0][2] == 0:
+        # si es la mas vieja en el set y no esta referenciada
 
-        if item[0][2] == 0:
-          #el ref bit de la pag es 0, es lo que voy a reemplazar
-          return oldInd
+          oldest = item[0][1]  # update the time
+          oldInd = item[1]  # index of the page in the pags list
 
         elif item[0][2] == 1:
-          #pon el ref en 0
-          item[0][2] = 0
-          continue
+        #esta referenciada, le damos second chance
 
-      #apuntado a donde cambie la pag
-      self.index = oldInd
-      return oldInd
+          item[0][2] = 0
 
     else:
 
-      #lo mismo que en NW, pero usando enumerate para indexar la lista
+      #lo mismo que para las pags que no estan en el WS pero iterando e indexando toda la lista
+      #indexamos para saber que indice realmente vamos a remover
       for index, item in enumerate(self.pags):
-        if item[1] < oldest:
-          oldest = item[1]
-          oldInd = index
-        if item[2] == 0:
-          return oldInd
+        if item[1] < oldest and item[2] == 0:
+            oldest = item[1]
+            oldInd = index
         elif item[2] == 1:
-          item[2] = 0
-          continue
+            item[2] = 0
+
+      #update al index pra posicionarme en donde removi la pagina
       self.index = oldInd
       return oldInd
 ```
@@ -261,6 +254,7 @@ Tambien tiene que acordarse de por donde va en el reloj para saber desde donde e
         else:
         #no tengo espacio, tengo que cambiar algo
 
+          #posicion que tengo que actualizar en la actualizar
           indiceCambio = self.mas_vieja()
           self.memory[indiceCambio] = page
           #actualizar la memoria
