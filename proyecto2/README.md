@@ -148,7 +148,7 @@ def calculate_position(list_index, used_pages):
 
     if num not in viejas:
       # la pag esta en uso, pero ya no la voy a volver a usar
-      # vamos a borrar esa pagina
+      # vamos guardar el indice de esa pagina para eliminarla
       candidatos_eliminacion.append(list_index)
     list_index += 1
       
@@ -156,6 +156,145 @@ def calculate_position(list_index, used_pages):
     return candidatos_eliminacion[0]
     # ya no las voy a volver a ver, no me importa que hay, saca lo primero
 ```
+Una vez la pagina mas vieja haya sido decidida, su indice es devuelto.
 
-## WSClock 
+Luego se busca en la lista de paginas y se elimina. Una vez esta es eliminada, insertamos nuestra nueva pagina al final. 
 
+### WSClock 
+
+WSClock fue implementado con clases y objetos. 
+
+Lo primero que se hizo fue un constructor para crear objetos del tipo Paging (las paginas en la memoria).
+
+```
+class Paging:
+  def __init__(self, page, time):
+    self.page = page  #num de pagina
+    self.tola = time  #tola
+    self.ref = 1      #como la estoy creando, la estoy referenciando
+  def getPage(self):
+    return [self.page, self.tola, self.ref]  #objeto clase paging
+```
+
+Esta clase es usada unicamente cuando tengo que crear o reemplazar una pagina.
+
+Creamos una segunda clase encargada de manejar todas las paginas en memoria, llamada WSClock.
+
+Esta clase tiene dos funciones prinipales junto a varias funciones auxiliares.
+
+#### mas_vieja
+
+```
+def mas_vieja(self):
+    NW = self.notWorking()
+  	#pags que no estan el WS
+
+    oldest = 3000
+    #asegurar que sea mayor al virtual time
+
+    oldInd = self.index
+    #donde estoy parada ahora mismo; saber desde donde empezar
+
+    if len(NW) > 0:
+    #tengo al menos una pag fuera del WS, pudo evitar sacar paginas que me son necearias
+    #items estan construidos [[pag, tiempo, ref bit], indice lista pags]
+
+      for item in NW:
+        if item[0][1] < oldest:
+          #campo del tiempo de la pag
+
+          oldest = item[0][1]  #actualizar el tiempo
+          oldInd = item[1]  #indice de la lista de pags
+
+        if item[0][2] == 0:
+          #el ref bit de la pag es 0, es lo que voy a reemplazar
+          return oldInd
+
+        elif item[0][2] == 1:
+          #pon el ref en 0
+          item[0][2] = 0
+          continue
+
+      #apuntado a donde cambie la pag
+      self.index = oldInd
+      return oldInd
+
+    else:
+
+      #lo mismo que en NW, pero usando enumerate para indexar la lista
+      for index, item in enumerate(self.pags):
+        if item[1] < oldest:
+          oldest = item[1]
+          oldInd = index
+        if item[2] == 0:
+          return oldInd
+        elif item[2] == 1:
+          item[2] = 0
+          continue
+      self.index = oldInd
+      return oldInd
+```
+
+mas_vieja requiere la funcion auxiliar notWorking, que es una funcion que me dice las paginas que NO estan en el WS. Es decir, su edad es mayor al TAU dado.
+
+Si tengo al menos una pagina que no este en el WS voy a chequear eso primero.
+
+#### clocking
+
+clocking el la funcion que recorre la lista. Esta funcion mantiene registro de que paginas a visto y cuales no para saber si las tiene que cambiar o no. Es aqui donde se usa la clase Paging, previamente mencionada. 
+
+Tambien tiene que acordarse de por donde va en el reloj para saber desde donde empezar a chequear paginas para removerlas.
+
+```
+  def clocking(self, pages):
+    for page in pages:
+      if page not in self.memory:
+        if len(self.pags) < self.cap:
+          self.memory.append(page)
+          #que pags tengo en memoria, los nums de las paginas
+
+          self.create_page(page, self.VIRTUAL_CLOCK)
+          #crear una nueva pagina con mi contructor Paging
+
+          self.pageFaults += 1
+          self.tick()  #mover la manecilla por cada page fault
+        else:
+        #no tengo espacio, tengo que cambiar algo
+
+          indiceCambio = self.mas_vieja()
+          self.memory[indiceCambio] = page
+          #actualizar la memoria
+
+          self.replacePage(page, self.VIRTUAL_CLOCK, indiceCambio)
+          #tengo que cambiar lo que tengo en la posicion donde se quedo la manecilla
+
+          self.pageFaults += 1
+          self.tick() 
+      else:
+        self.update_page(page, self.VIRTUAL_CLOCK)
+        #vi la pagina de nuevo, tengo que actualizar el time of last access de esta pag en esepcifico
+
+      self.VIRTUAL_CLOCK += 1  #cada iteracion es 1s
+    print("page faults: ", self.pageFaults)
+```
+
+Las funciones auxiliares son las que ayudan que el programa se actualize correctamente. Esas se encuentran en el codigo fuente.
+
+## Fuentes consultadas
+
+list-remove dupes: 
+https://www.w3schools.com/python/python_howto_remove_duplicates.asp 
+
+optimal source: 
+https://www.youtube.com/watch?v=jeJIKKQcqpU&t=518s
+
+clases: 
+https://www.w3schools.com/python/python_classes.asp
+
+Modern Operating Systems Third Edition Book
+
+## Personas consultadas
+
+Dr. Jose Ortiz Ubarri
+
+Sergio Rodriguez
