@@ -69,4 +69,93 @@ Una vez la memoria se llena el algoritmo corre de la siguiente manera:
 
 - Recorro la lista
 
-- 
+- Chequear que la pagina no este referenciada. Si lo esta, cambiar el reference bit a 0
+
+- Buscar la pagina mas vieja que no este en el working set (edad es menor al tau)
+
+- Reemplazar la pagina mas vieja y hacer que la manecilla se mueva a la pagina reemplezada
+
+```
+python wsclock.py <capacidad de la memoria> <tau (tiempo max de una pag en la memoria)> <file con las paginas a accesar>
+python wsclock.py           5                                     3                                      index.txt
+```
+
+## Explicacion de codigo
+
+Cada uno de estos aloritmos debe devolver la cantidad de page faults generadas.
+
+En cada uno de los algoritmos hay que leer un file. Se lee de la siguiente manera: 
+
+```
+with open(file, 'r') as f:
+  for line in f:
+    line = line.split()  # cada instruccion en cada linea
+    # ya sea vertical u horizontal
+    for thing in line:
+      pages.append(int(thing[2:]))  # los primeros 2 chars son "W:" o "R:"
+      # eliminamos y lo convertimos a un int
+```
+
+### FIFO
+
+```
+for item in pages:
+# cada pagina que tengo que chequear
+
+  if item not in memory:
+  # no lo tengo en memoria aun
+
+    if len(memory) < N:
+    # puedo insertar
+
+      memory.append(item)
+      page_fault += 1
+
+    else: # esta lleno, tengo que remover para hacer espacio
+
+      memory.pop(0)
+      # remover el primero
+
+      memory.append(item)
+      page_fault += 1
+```
+
+### OPTIMAL
+
+Optimal debe buscar la pagina que me voy a tardar mas en usar. Se implemento usando esta funcion: 
+
+```
+def calculate_position(list_index, used_pages):
+  viejas = [] #las voy a volver a usar
+  candidatos_eliminacion = [] #paginas que no voy a volver a usar
+
+  for pos in range(list_index, len(pages)):
+  #chequeo las paginas de donde me quede al final
+
+    if pages[pos] in used_pages:
+    # paginas que ya he visto | esta en memoria
+
+      viejas.append(pages[pos])
+      # guardamos la ultima vez que la vemos para saber cuanto hay
+      # que esperar por volverla a usar
+
+  # solo me interesa la primera instancia de cada pagina
+  viejas = list(dict.fromkeys(viejas))
+
+  list_index = 0
+  for num in used_pages:
+  #iterar por los nums que he visto antes
+
+    if num not in viejas:
+      # la pag esta en uso, pero ya no la voy a volver a usar
+      # vamos a borrar esa pagina
+      candidatos_eliminacion.append(list_index)
+    list_index += 1
+      
+  if len(candidatos_eliminacion) != 0:
+    return candidatos_eliminacion[0]
+    # ya no las voy a volver a ver, no me importa que hay, saca lo primero
+```
+
+## WSClock 
+
